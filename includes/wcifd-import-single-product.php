@@ -169,8 +169,8 @@ function wcifd_import_single_product( $hash ) {
 	$on_sale       = $sale_price ? 1 : 0;
 
 	/*Prezzo b2b*/
-	$b2b_netprice = wcifd_get_list_price( $product, 4, false );
-	// = 'NetPrice4';
+	$b2b_grossprice = wcifd_get_list_price( $product, 4, true );
+	// = 'GrossPrice4';
 
 	/*Variazione taglia e colore di Danea*/
 	$variants = null;
@@ -875,10 +875,10 @@ function wcifd_import_single_product( $hash ) {
 					'sale_price'    => '',
 				);
 
-				// Add or update 121885 (gruppo rivendotir) entry with current $b2b_netprice
-				if ( isset( $b2b_netprice ) ) {
+				// Add or update 121885 (gruppo rivendotir) entry with current $b2b_grossprice
+				if ( isset( $b2b_grossprice ) ) {
 					$group_prices[121885] = array(
-						'regular_price' => $b2b_netprice,
+						'regular_price' => $b2b_grossprice,
 						'sale_price'    => '',
 					);
 				}
@@ -974,10 +974,10 @@ function wcifd_import_single_product( $hash ) {
 			'sale_price'    => '',
 		);
 
-		// Add or update 121885 (gruppo rivenditore) entry with current $b2b_netprice
-		if ( isset( $b2b_netprice ) ) {
+		// Add or update 121885 (gruppo rivenditore) entry with current $b2b_grossprice
+		if ( isset( $b2b_grossprice ) ) {
 			$group_prices[121885] = array(
-				'regular_price' => $b2b_netprice,
+				'regular_price' => $b2b_grossprice,
 				'sale_price'    => '',
 			);
 		}
