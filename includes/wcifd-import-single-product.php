@@ -168,6 +168,10 @@ function wcifd_import_single_product( $hash ) {
 	$sale_price    = wcifd_get_list_price( $product, $sale_price_list, $tax_included );
 	$on_sale       = $sale_price ? 1 : 0;
 
+	/*Prezzo b2b*/
+	$b2b_netprice = wcifd_get_list_price( $product, 4, false );
+	// = 'NetPrice4';
+
 	/*Variazione taglia e colore di Danea*/
 	$variants = null;
 	if ( isset( $product['Variants'] ) ) {
@@ -851,7 +855,37 @@ function wcifd_import_single_product( $hash ) {
 				}
 			}
 
+
 			if ( $var_id ) {
+				
+				
+				// --- Updated group price update block ---
+				$meta_key = 'wcb2b_product_group_prices';
+				$serialized_group_prices = get_post_meta( $var_id, $meta_key, true );
+				$group_prices = maybe_unserialize( $serialized_group_prices );
+
+				// Ensure $group_prices is an array
+				if ( ! is_array( $group_prices ) ) {
+					$group_prices = array();
+				}
+
+				// Always add 121881 (gruppo ospite) entry with zero prices
+				$group_prices[121881] = array(
+					'regular_price' => '',
+					'sale_price'    => '',
+				);
+
+				// Add or update 121885 (gruppo rivendotir) entry with current $b2b_netprice
+				if ( isset( $b2b_netprice ) ) {
+					$group_prices[121885] = array(
+						'regular_price' => $b2b_netprice,
+						'sale_price'    => '',
+					);
+				}
+
+				update_post_meta( $var_id, $meta_key, $group_prices );
+				// ---------------------------------------------------
+				
 
 				/*Termine di tassonomia (attributo) assegnato alla variazione di prodotto*/
 				if ( $avail_colors ) {
@@ -887,6 +921,8 @@ function wcifd_import_single_product( $hash ) {
 				if ( $attr ) {
 					update_post_meta( $var_id, '_product_attributes', $attr );
 				}
+
+				
 			}
 		}
 
@@ -921,10 +957,37 @@ function wcifd_import_single_product( $hash ) {
 
 		update_post_meta( $product_id, '_product_attributes', $attributes );
 
-	}
+	} else {
+		// --- Group price update for product with no variants ---
+		$meta_key = 'wcb2b_product_group_prices';
+		$serialized_group_prices = get_post_meta( $product_id, $meta_key, true );
+		$group_prices = maybe_unserialize( $serialized_group_prices );
 
-	/*Cancello i dati temporanei dalla tabella dedicata*/
-	$temp->wcifd_delete_temporary_data( $hash );
+		// Ensure $group_prices is an array
+		if ( ! is_array( $group_prices ) ) {
+			$group_prices = array();
+		}
+
+		// Always add 121881 (gruppo ospite) entry with zero prices
+		$group_prices[121881] = array(
+			'regular_price' => '',
+			'sale_price'    => '',
+		);
+
+		// Add or update 121885 (gruppo rivenditore) entry with current $b2b_netprice
+		if ( isset( $b2b_netprice ) ) {
+			$group_prices[121885] = array(
+				'regular_price' => $b2b_netprice,
+				'sale_price'    => '',
+			);
+		}
+
+		update_post_meta( $product_id, $meta_key, $group_prices );
+		// --------------------------------------------------------
+
+		/*Cancello i dati temporanei dalla tabella dedicata*/
+		$temp->wcifd_delete_temporary_data( $hash );
+	}
 
 }
 add_action( 'wcifd_import_product_event', 'wcifd_import_single_product', 10, 8 );
